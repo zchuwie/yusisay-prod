@@ -2,27 +2,27 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentConversationId = null;
     let currentChatUserName = null;
     let currentChatUserAvatar = null;
-    let currentChatUserId = null;  
+    let currentChatUserId = null;
     let originalConversations = null;
     const userId = window.Laravel.userId;
 
     const conversationList = document.getElementById("conversationList");
     const messageInput = document.getElementById("messageInput");
-    const sendBtn = document.getElementById("sendBtn");
+    const sendBtn = document.getElementById("submitBtn");
     const messagesDiv = document.getElementById("messages");
     const chatUserName = document.getElementById("chatUserName");
     const chatUserAvatar = document.getElementById("chatUserAvatar");
     const searchInput = document.getElementById("search");
 
     if (!conversationList) return;
- 
+
     originalConversations = conversationList.innerHTML;
- 
+
     Echo.private(`user.${userId}`).listen("MessageSent", (e) => {
         console.log("Received message on user channel:", e);
         updateConversationList(e.message);
     });
- 
+
     async function updateConversationList(message) {
         console.log("Updating conversation list with:", message);
 
@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     messagePreview.className =
                         "text-xs text-gray-600 truncate recent-message";
                 }
- 
+
                 const headerDiv =
                     messageContainer.querySelector("div:first-child");
                 if (headerDiv) {
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 originalConversations = conversationList.innerHTML;
             }
-        } else { 
+        } else {
             try {
                 const response = await fetch(`/api/user/${message.sender_id}`);
                 if (!response.ok) throw new Error("Failed to fetch user info");
@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     }
- 
+
     async function switchConversation(item) {
         if (!item) return;
 
@@ -215,13 +215,13 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Prepared new chat with user:", currentChatUserId);
         }
     }
- 
+
     conversationList.addEventListener("click", (e) => {
         const item = e.target.closest("li[data-id], li[data-userid]");
         if (!item) return;
         switchConversation(item);
     });
- 
+
     let searchTimeout;
     searchInput?.addEventListener("input", async (e) => {
         const q = e.target.value.trim();
@@ -299,15 +299,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
 
-                    li.addEventListener("click", () => { 
+                    li.addEventListener("click", () => {
                         searchInput.value = "";
                         conversationList.innerHTML = originalConversations;
- 
+
                         let targetItem = conversationList.querySelector(
                             `li[data-userid="${user.id}"]`
                         );
- 
-                        if (!targetItem) { 
+
+                        if (!targetItem) {
                             targetItem = document.createElement("li");
                             targetItem.className =
                                 "cursor-pointer py-4 px-5 hover:bg-gray-50 transition-colors flex items-start gap-3 border-b border-gray-100";
@@ -328,14 +328,14 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <p class="text-xs text-gray-500 truncate recent-message">Click to start a conversation</p>
                             </div>
                         `;
- 
+
                             conversationList.insertBefore(
                                 targetItem,
                                 conversationList.firstChild
-                            ); 
+                            );
                             originalConversations = conversationList.innerHTML;
                         }
- 
+
                         if (targetItem) {
                             switchConversation(targetItem);
                         }
@@ -382,14 +382,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         return null;
     }
- 
+
     async function createConversationAndSendMessage(body) {
         if (!currentChatUserId) {
             console.error("No user selected to chat with");
             return null;
         }
 
-        try { 
+        try {
             const convRes = await fetch("/chat/start", {
                 method: "POST",
                 headers: {
@@ -409,7 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const conv = await convRes.json();
             currentConversationId = conv.id;
             console.log("Created new conversation:", currentConversationId);
- 
+
             const msgRes = await fetch("/chat/message", {
                 method: "POST",
                 headers: {
@@ -430,22 +430,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
             const msg = await msgRes.json();
- 
+
             const activeItem = conversationList.querySelector("li.active");
             if (activeItem) {
                 activeItem.dataset.id = currentConversationId;
- 
+
                 if (!activeItem.dataset.id) {
                     const newItem = activeItem.cloneNode(true);
                     newItem.dataset.id = currentConversationId;
                     conversationList.insertBefore(
                         newItem,
                         conversationList.firstChild
-                    ); 
+                    );
                     originalConversations = conversationList.innerHTML;
                 }
             }
- 
+
             if (window.currentEchoChannel) {
                 window.currentEchoChannel.stopListening("MessageSent");
                 Echo.leave(`private-conversation.${currentConversationId}`);
@@ -467,14 +467,14 @@ document.addEventListener("DOMContentLoaded", () => {
             throw err;
         }
     }
- 
+
     sendBtn.addEventListener("click", async () => {
         const body = messageInput.value.trim();
         if (!body) {
             console.error("Cannot send empty message");
             return;
         }
- 
+
         if (!currentConversationId && currentChatUserId) {
             const messageCopy = body;
             messageInput.value = "";
@@ -495,7 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             return;
         }
- 
+
         if (!currentConversationId) {
             console.error("No conversation selected");
             return;
@@ -535,14 +535,14 @@ document.addEventListener("DOMContentLoaded", () => {
             messageInput.focus();
         }
     });
- 
+
     messageInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             sendBtn.click();
         }
     });
- 
+
     function formatMessageTime(dateString) {
         const date = new Date(dateString);
         return date.toLocaleTimeString("en-US", {
@@ -616,7 +616,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const div = createMessageElement(msg, isMine);
         messagesDiv.appendChild(div);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
- 
+
         const convItem = conversationList.querySelector(
             `li[data-id="${msg.conversation_id}"]`
         );
